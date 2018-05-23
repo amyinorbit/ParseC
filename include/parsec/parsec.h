@@ -22,6 +22,7 @@ typedef uint32_t                parsec_idx;
 enum parsec_kind_e {
     PARSEC_TOKEN_INVALID    = -1,
     PARSEC_TOKEN_STRING,
+    PARSEC_TOKEN_KEY,
     PARSEC_TOKEN_INT,
     PARSEC_TOKEN_FLOAT,
     PARSEC_TOKEN_COMMENT,
@@ -35,21 +36,22 @@ enum parsec_result_e {
 
 struct parsec_token_s {
     parsec_kind kind;
-    parsec_idx  start;
+    const char* start;
     parsec_idx  length;
 };
 
 struct parsec_s {
     char        comment_char;
     const char* data;
-    parsec_idx  data_length;
-    parsec_idx  head;
+    const char* end;
+    const char* head;
     parsec_idx  next_token;
 };
 
 
 void parsec_init(parsec* status, const char* source, uint64_t length, char comment_char);
 parsec_result parsec_lex(parsec* status, parsec_token* tokens, uint64_t token_count);
+bool parsec_token_cmp(parsec_token token, const char* str);
 double parsec_str_double(const char* parser, parsec_idx length);
 int32_t parsec_str_int(const char* parser, parsec_idx length);
 

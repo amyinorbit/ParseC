@@ -10,19 +10,18 @@
 #include "utf8.h"
 #include <math.h>
 #include <assert.h>
+#include <string.h>
 #include <parsec/parsec.h>
 
 // MARK: - parser helping tools
 
-
-
 static inline codepoint_t current(const parsec* parser) {
-    uint64_t remaining = parser->data_length - parser->head;
-    return utf8_getCodepoint(&parser->data[parser->head], remaining);
+    uint64_t remaining = parser->end - parser->head;
+    return utf8_getCodepoint(parser->head, remaining);
 }
 
 static inline bool end(const parsec* parser) {
-    return (parser->head + utf8_codepointSize(current(parser))) >= parser->data_length;
+    return (parser->head + utf8_codepointSize(current(parser))) >= parser->end;
 }
 
 static inline codepoint_t next_char(parsec* parser) {
@@ -102,6 +101,19 @@ success:
     return true;
 }
 
+static bool parse_key(parsec* parser, parsec_token* token) {
+    token->start = parser->head;
+    codepoint_t c = next_char(parser);
+    
+    for(;;) {
+        if(!utf8_isIdentifier(c)) break;
+        c = next_char(parser);
+    }
+    token->kind = PARSEC_TOKEN_KEY;
+    token->length = parser->head - token->start;
+    return true;
+}
+
 static bool parse_string(parsec* parser, parsec_token* token) {
     // First, we parse the initial quote
     token->start = parser->head;
@@ -131,6 +143,7 @@ static void skip_line(parsec* parser) {
 }
 
 parsec_kind token_type(codepoint_t c, char comment_char) {
+    if(utf8_isIdentifierHead(c))                                    return PARSEC_TOKEN_KEY;
     if(c == '-' || c == '+' || c == '.' || (c >= '0' && c <= '9'))  return PARSEC_TOKEN_INT;
     if(c == comment_char)                                           return PARSEC_TOKEN_COMMENT;
     if(c == '\'')                                                   return PARSEC_TOKEN_STRING;
@@ -144,7 +157,7 @@ void parsec_init(parsec* status, const char* source, uint64_t length, char comme
     assert(source && "Invalid source data given");
     
     status->data            = source;
-    status->data_length     = length;
+    status->end             = source + length;
     status->head            = 0;
     status->next_token      = 0;
     status->comment_char    = comment_char;
@@ -164,7 +177,7 @@ parsec_result parsec_lex(parsec* parser, parsec_token* tokens, uint64_t token_co
         // We save the current head for two reasons:
         //      - if the token parsing fails for any reason, we can restore (for reentrance)
         //      - if the token parsing goes well, then we have the start index
-        uint64_t head = parser->head;
+        const char* start = parser->head;
         
         codepoint_t c = current(parser);
         switch (token_type(c, parser->comment_char)) {
@@ -172,8 +185,12 @@ parsec_result parsec_lex(parsec* parser, parsec_token* tokens, uint64_t token_co
         case PARSEC_TOKEN_COMMENT:
             skip_line(parser);
             token->kind = PARSEC_TOKEN_COMMENT;
-            token->start = head;
-            token->length = (parser->head - head);
+            token->start = parser->head;
+            token->length = (parser->head - start);
+            break;
+            
+        case PARSEC_TOKEN_KEY:
+            if(!parse_key(parser, token)) return PARSEC_INVALID;
             break;
             
         case PARSEC_TOKEN_INT:
@@ -191,6 +208,10 @@ parsec_result parsec_lex(parsec* parser, parsec_token* tokens, uint64_t token_co
         }
     }
     return parser->next_token;
+}
+
+bool parsec_token_cmp(parsec_token token, const char* str) {
+    return memcmp(token.start, str, token.length) == 0;
 }
 
 static int64_t max_power10(int64_t n) {
