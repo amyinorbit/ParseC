@@ -152,15 +152,15 @@ parsec_kind token_type(codepoint_t c, char comment_char) {
 
 // MARK: - Public API implementation
 
-void parsec_init(parsec* status, const char* source, uint64_t length, char comment_char) {
-    assert(status && "Invalid ParseC status given");
+void parsec_init(parsec* parser, const char* source, uint64_t length, char comment_char) {
+    assert(parser && "Invalid ParseC status given");
     assert(source && "Invalid source data given");
     
-    status->data            = source;
-    status->end             = source + length;
-    status->head            = 0;
-    status->next_token      = 0;
-    status->comment_char    = comment_char;
+    parser->data            = source;
+    parser->end             = source + length;
+    parser->head            = source;
+    parser->next_token      = 0;
+    parser->comment_char    = comment_char;
 }
 
 parsec_result parsec_lex(parsec* parser, parsec_token* tokens, uint64_t token_count) {
