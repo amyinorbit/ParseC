@@ -26,6 +26,8 @@ enum parsec_kind_e {
     PARSEC_TOKEN_INT,
     PARSEC_TOKEN_FLOAT,
     PARSEC_TOKEN_COMMENT,
+    PARSEC_TOKEN_NEWLINE,
+    PARSEC_TOKEN_MARKER,
 };
 
 enum parsec_result_e {

@@ -146,7 +146,9 @@ parsec_kind token_type(codepoint_t c, char comment_char) {
     if(utf8_isIdentifierHead(c))                                    return PARSEC_TOKEN_KEY;
     if(c == '-' || c == '+' || c == '.' || (c >= '0' && c <= '9'))  return PARSEC_TOKEN_INT;
     if(c == comment_char)                                           return PARSEC_TOKEN_COMMENT;
+    if(c == '@')                                                    return PARSEC_TOKEN_MARKER;
     if(c == '\'')                                                   return PARSEC_TOKEN_STRING;
+    if(c == '\n')                                                   return PARSEC_TOKEN_NEWLINE;
     return PARSEC_TOKEN_INVALID;
 }
 
@@ -186,6 +188,20 @@ parsec_result parsec_lex(parsec* parser, parsec_token* tokens, uint64_t token_co
             skip_line(parser);
             token->kind = PARSEC_TOKEN_COMMENT;
             token->start = parser->head;
+            token->length = (parser->head - start);
+            break;
+            
+        case PARSEC_TOKEN_MARKER:
+            token->kind = PARSEC_TOKEN_MARKER;
+            token->start = parser->head;
+            next_char(parser);
+            token->length = (parser->head - start);
+            break;
+            
+        case PARSEC_TOKEN_NEWLINE:
+            token->kind = PARSEC_TOKEN_NEWLINE;
+            token->start = parser->head;
+            next_char(parser);
             token->length = (parser->head - start);
             break;
             
