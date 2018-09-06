@@ -135,11 +135,12 @@ static bool parse_string(parsec* parser, parsec_token* token) {
 // MARK: - 
 
 static void skip_whitespace(parsec* parser) {
-    while(utf8_isWhitespace(current(parser)) && !end(parser)) next_char(parser);
+    while(current(parser) != '\n'
+          && utf8_isWhitespace(current(parser)) && !end(parser)) next_char(parser);
 }
 
 static void skip_line(parsec* parser) {
-    while(current(parser) != '\n' && !end(parser)) next_char(parser);
+    while(!end(parser) && current(parser) != '\n') next_char(parser);
 }
 
 parsec_kind token_type(codepoint_t c, char comment_char) {
