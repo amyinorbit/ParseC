@@ -135,8 +135,7 @@ static bool parse_string(parsec* parser, parsec_token* token) {
 // MARK: - 
 
 static void skip_whitespace(parsec* parser) {
-    while(current(parser) != '\n'
-          && utf8_isWhitespace(current(parser)) && !end(parser)) next_char(parser);
+    while(current(parser) != '\n' && utf8_isWhitespace(current(parser)) && !end(parser)) next_char(parser);
 }
 
 static void skip_line(parsec* parser) {
@@ -186,22 +185,22 @@ parsec_result parsec_lex(parsec* parser, parsec_token* tokens, uint64_t token_co
         switch (token_type(c, parser->comment_char)) {
         
         case PARSEC_TOKEN_COMMENT:
-            skip_line(parser);
             token->kind = PARSEC_TOKEN_COMMENT;
-            token->start = parser->head;
+            token->start = start;
+            skip_line(parser);
             token->length = (parser->head - start);
             break;
             
         case PARSEC_TOKEN_MARKER:
             token->kind = PARSEC_TOKEN_MARKER;
-            token->start = parser->head;
+            token->start = start;
             next_char(parser);
             token->length = (parser->head - start);
             break;
             
         case PARSEC_TOKEN_NEWLINE:
             token->kind = PARSEC_TOKEN_NEWLINE;
-            token->start = parser->head;
+            token->start = start;
             next_char(parser);
             token->length = (parser->head - start);
             break;
